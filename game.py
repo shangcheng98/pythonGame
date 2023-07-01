@@ -2,7 +2,7 @@ import pygame
 import random
 from pygame.locals import *
 from pygame.sprite import *
-
+import time
 
 class Player(pygame.sprite.Sprite):
 
@@ -61,15 +61,17 @@ class Monster(pygame.sprite.Sprite):
             self.speedx *=-1
 
 
-
-
-
-
-
 ####setup
 pygame.init()
-screen = pygame.display.set_mode((1000, 700))
+
 clock = pygame.time.Clock()
+######
+screen_width = 1000
+screen_height = 700
+####component create
+font = pygame.font.Font(None, 36) 
+screen = pygame.display.set_mode((screen_width, screen_height))
+pygame.display.set_caption("BROMATO")
 
 ###sprite gruppe 
 all_sprites = pygame.sprite.Group()
@@ -81,13 +83,56 @@ for i in range(10):
     all_sprites.add(monster)
     monsters.add(monster)
 
+###start UI
+def start_game():
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type==QUIT:
+                pygame.quit()
+                return
+            
+            if event.type == KEYDOWN:
+                if event.key ==K_SPACE:
+                    running = False
+
+        screen.fill("gray")
+
+        title = font.render("Bromato",True,(255,255,255))
+        start_hint=font.render("Press SPACE to start",True,(255,255,255))
+
+        screen.blit(title,((screen_width-title.get_width())/2,screen_height/3))
+        screen.blit(start_hint,((screen_width-start_hint.get_width())/2,screen_height/3+100))
+
+        pygame.display.flip() 
+
+def end_game(score):
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type ==QUIT:
+                pygame.quit()
+                return
+            
+        screen.fill((200,200,200))
+        end_text = font.render("game over,my Bromato",True,(255,255,255))
+        score_text = font.render(f"Score:{score}",True,(255,255,255))
+
+        screen.blit(end_text,(((screen_width-end_text.get_width())/2,screen_height/3)))
+        screen.blit(score_text,(((screen_width-score_text.get_width())/2,screen_height/3+100)))
+
+        pygame.display.flip()
+
+start_game()
 running = True
 ## add player
 player = Player()
 all_sprites.add(player)
 
-#####add score
-counter=0
+#####add game parameter
+counter=0 #score
+game_duration=60
+start_time=time.time()
 
 
 while running:
@@ -96,33 +141,49 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == KEYDOWN:
+            if event.key ==K_ESCAPE:
+                running = False
 
+    ###time
+    current_time = time.time()
+    player_duration = int(current_time-start_time)
+    countdown = game_duration-player_duration
+
+    if countdown <=0:
+        running=False
+
+    timer_text = font.render(f"Countdown:{countdown}",True,(255,255,255))
 
     #####update the sprite
     all_sprites.update()
+
+    ####collision detection
     hits = pygame.sprite.spritecollide(player,monsters,True)
     
     for hit in hits:
         counter = counter+1
-        print(counter)
         monster = Monster()
-        monster.image.fill((50+counter*2,200-counter*2,150+counter*2))
-        player.image.fill((counter*3,counter*3+100,250-counter*2))
+        monster.image.fill((50+counter*1.2,0+counter*0.5,0+counter))
+        player.image.fill((40+counter*1.1,counter*1+100,2+counter))
         all_sprites.add(monster)
         monsters.add(monster)
 
     screen.fill("gray")
+    score = font.render(str(counter),True,(0,0,0))
 
-   
+    screen.blit(score,(10,10))
+    screen.blit(timer_text,((screen_width-timer_text.get_width())/2,10))
+        
     all_sprites.draw(screen)
     #add player on the screen
  
     pygame.display.flip()#display the work on screen
 
-
-
-
     clock.tick(60) ##FPS 60
+
+###end UI
+end_game(counter)
 
 pygame,quit()
 
