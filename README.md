@@ -2,4 +2,4 @@
 
 a small easy game , idea from brotato from steam.
 
-next step UI design
+next step UI desig
