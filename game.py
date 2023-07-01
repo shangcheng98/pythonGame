@@ -3,19 +3,21 @@ import random
 from pygame.locals import *
 from pygame.sprite import *
 import time
+import os
 
 class Player(pygame.sprite.Sprite):
 
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface([50,50])
-        self.image.fill((255,200,0))
+        self.image =pygame.transform.scale(player_img,(45,50))
+        self.image.set_colorkey((0,0,0))## get rid of (r,b,g)
         self.rect = self.image.get_rect()
         self.rect.x =random.randint(0,1000-self.rect.width)
         self.rect.y = random.randint(0,650-self.rect.height)
         self.speed = 10
 
     def update(self):
+    
         movement = pygame.key.get_pressed()
         if movement[K_UP]:
             if self.rect.y <= 0:
@@ -44,8 +46,8 @@ class Monster(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
 
-        self.image = pygame.Surface([50,50])
-        self.image.fill((0,255,0))
+        self.image =pygame.transform.scale(monster_img,(45,50))
+        self.image.set_colorkey((255,255,255))## get rid of (r,b,g)
         self.rect = self.image.get_rect()
         self.rect.x =random.randint(0,1000-self.rect.width)
         self.rect.y = random.randint(0,650-self.rect.height)
@@ -60,11 +62,34 @@ class Monster(pygame.sprite.Sprite):
         if self.rect.left <=0 or self.rect.right >=1000:
             self.speedx *=-1
 
+class Food(pygame.sprite.Sprite):
 
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+
+        self.image =pygame.transform.scale(food_img,(40,60))
+        self.image.set_colorkey((0,0,0))## get rid of (r,b,g)
+        self.rect = self.image.get_rect()
+        self.rect.x =random.randint(0,1000-self.rect.width)
+        self.rect.y = random.randint(0,650-self.rect.height)
+        self.speedx = 1
+        self.speedy = 1
+
+    def update(self):  
+        self.rect.x += self.speedx
+        self.rect.y += self.speedy
+        if self.rect.bottom >=700 or self.rect.top<=0:
+            self.speedy *= -1
+        if self.rect.left <=0 or self.rect.right >=1000:
+            self.speedx *=-1
+
+            
 ####setup
 pygame.init()
 
 clock = pygame.time.Clock()
+
+
 ######
 screen_width = 1000
 screen_height = 700
@@ -73,9 +98,14 @@ font = pygame.font.Font(None, 36)
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("BROMATO")
 
+###image loading
+player_img   = pygame.image.load(os.path.join("image","Wisdom.webp")).convert()
+monster_img   = pygame.image.load(os.path.join("image","monster.png")).convert()
+food_img   = pygame.image.load(os.path.join("image","food.png")).convert()
 ###sprite gruppe 
 all_sprites = pygame.sprite.Group()
 monsters = pygame.sprite.Group()
+foods=pygame.sprite.Group()
 
 ###add monster
 for i in range(10):
@@ -113,6 +143,9 @@ def end_game(score):
             if event.type ==QUIT:
                 pygame.quit()
                 return
+            # if event.type ==KEYDOWN:
+            #     if event.key == K_SPACE:
+            #         start_game()
             
         screen.fill((200,200,200))
         end_text = font.render("game over,my Bromato",True,(255,255,255))
@@ -159,16 +192,24 @@ while running:
     all_sprites.update()
 
     ####collision detection
-    hits = pygame.sprite.spritecollide(player,monsters,True)
-    
-    for hit in hits:
+    hits_byMonster = pygame.sprite.spritecollide(player,monsters,True)
+    hits_byFood = pygame.sprite.spritecollide(player,foods,True)
+
+    for hit in hits_byMonster:
         counter = counter+1
         monster = Monster()
-        monster.image.fill((50+counter*1.2,0+counter*0.5,0+counter))
-        player.image.fill((40+counter*1.1,counter*1+100,2+counter))
+        if counter%3==0:
+            food = Food()
+            all_sprites.add(food)
+            foods.add(food)
+
         all_sprites.add(monster)
         monsters.add(monster)
 
+    for eat in hits_byFood:
+        player.speed += 0.1
+
+#####screen rendering
     screen.fill("gray")
     score = font.render(str(counter),True,(0,0,0))
 
