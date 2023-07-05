@@ -15,26 +15,26 @@ class Player(pygame.sprite.Sprite):
         self.rect.x =random.randint(0,1000-self.rect.width)
         self.rect.y = random.randint(0,650-self.rect.height)
         self.speed = 10
-
+        self.hp = 100
     def update(self):
     
         movement = pygame.key.get_pressed()
-        if movement[K_UP]:
+        if movement[K_w]:
             if self.rect.y <= 0:
                 self.rect.y = 0
             else:
                 self.rect.y -= self.speed
-        if movement[K_DOWN]:
+        if movement[K_s]:
             if self.rect.y >= 650:
                 self.rect.y = 650
             else:
                 self.rect.y += self.speed
-        if movement[K_LEFT]:
+        if movement[K_a]:
             if self.rect.x <= 0:
                 self.rect.x = 0
             else:
                 self.rect.x -= self.speed
-        if movement[K_RIGHT]:
+        if movement[K_d]:
             if self.rect.x >= 950:
                 self.rect.x = 950
             else:
@@ -183,8 +183,6 @@ while running:
     player_duration = int(current_time-start_time)
     countdown = game_duration-player_duration
 
-    if countdown <=0:
-        running=False
 
     timer_text = font.render(f"Countdown:{countdown}",True,(255,255,255))
 
@@ -198,7 +196,8 @@ while running:
     for hit in hits_byMonster:
         counter = counter+1
         monster = Monster()
-        if counter%3==0:
+        player.hp -=10
+        if random.randint(1,9)%3 ==0:
             food = Food()
             all_sprites.add(food)
             foods.add(food)
@@ -207,14 +206,25 @@ while running:
         monsters.add(monster)
 
     for eat in hits_byFood:
-        player.speed += 0.1
+        player.hp+= random.randint(1,5)
+        countdown -=10
+       
+
+    score = player.hp - countdown 
+########end game singal:
+    if countdown <=0:
+        running=False
+    if player.hp <= 0:
+        running=False
 
 #####screen rendering
     screen.fill("gray")
-    score = font.render(str(counter),True,(0,0,0))
-
-    screen.blit(score,(10,10))
+    score_text = font.render(f"score:{score}",True,(0,0,0))
+    hp = font.render(f"hp:{player.hp}",True,(0,0,0))
+    
+    screen.blit(score_text,(10,10))
     screen.blit(timer_text,((screen_width-timer_text.get_width())/2,10))
+    screen.blit(hp,(900,10))
         
     all_sprites.draw(screen)
     #add player on the screen
@@ -224,7 +234,7 @@ while running:
     clock.tick(60) ##FPS 60
 
 ###end UI
-end_game(counter)
+end_game(score)
 
 pygame,quit()
 
