@@ -9,8 +9,8 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image =pygame.transform.scale(player_img,(45,50))
-        self.image.set_colorkey((0,0,0))## get rid of (r,b,g)
+        self.image =pygame.transform.scale(player_img,(60,55))
+       ## self.image.set_colorkey((255,255,255))## get rid of (r,b,g)
         self.rect = self.image.get_rect()
         self.rect.x =random.randint(0,1000-self.rect.width)
         self.rect.y = random.randint(0,650-self.rect.height)
@@ -68,7 +68,7 @@ class Food(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
 
         self.image =pygame.transform.scale(food_img,(40,60))
-        self.image.set_colorkey((0,0,0))## get rid of (r,b,g)
+       ## self.image.set_colorkey((0,0,0))## get rid of (r,b,g)
         self.rect = self.image.get_rect()
         self.rect.x =random.randint(0,1000-self.rect.width)
         self.rect.y = random.randint(0,650-self.rect.height)
@@ -99,16 +99,16 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("BROMATO")
 
 ###image loading
-player_img   = pygame.image.load(os.path.join("image","Wisdom.webp")).convert()
-monster_img   = pygame.image.load(os.path.join("image","monster.png")).convert()
-food_img   = pygame.image.load(os.path.join("image","food.png")).convert()
+player_img   = pygame.image.load(os.path.join("image","Sad_tomato.png")).convert_alpha()
+monster_img   = pygame.image.load(os.path.join("image","Wisdom.webp")).convert_alpha()
+food_img   = pygame.image.load(os.path.join("image","Lost_duck.png")).convert_alpha()
 ###sprite gruppe 
 all_sprites = pygame.sprite.Group()
 monsters = pygame.sprite.Group()
 foods=pygame.sprite.Group()
 
 ###add monster
-for i in range(10):
+for i in range(5):
     monster = Monster()
     all_sprites.add(monster)
     monsters.add(monster)
