@@ -5,85 +5,13 @@ from pygame.sprite import *
 import time
 import os
 
-class Player(pygame.sprite.Sprite):
-
-    def __init__(self):
-        pygame.sprite.Sprite.__init__(self)
-        self.image =pygame.transform.scale(player_img,(60,55))
-       ## self.image.set_colorkey((255,255,255))## get rid of (r,b,g)
-        self.rect = self.image.get_rect()
-        self.rect.x =random.randint(0,1000-self.rect.width)
-        self.rect.y = random.randint(0,650-self.rect.height)
-        self.speed = 10
-        self.hp = 100
-    def update(self):
-    
-        movement = pygame.key.get_pressed()
-        if movement[K_w]:
-            if self.rect.y <= 0:
-                self.rect.y = 0
-            else:
-                self.rect.y -= self.speed
-        if movement[K_s]:
-            if self.rect.y >= 650:
-                self.rect.y = 650
-            else:
-                self.rect.y += self.speed
-        if movement[K_a]:
-            if self.rect.x <= 0:
-                self.rect.x = 0
-            else:
-                self.rect.x -= self.speed
-        if movement[K_d]:
-            if self.rect.x >= 950:
-                self.rect.x = 950
-            else:
-                self.rect.x += self.speed
+from gameClass.player import Player
+from gameClass.monster import Monster
+from gameClass.food import Food
+from gameClass.bullet import Bullet
 
 
-class Monster(pygame.sprite.Sprite):
 
-    def __init__(self):
-        pygame.sprite.Sprite.__init__(self)
-
-        self.image =pygame.transform.scale(monster_img,(45,50))
-        self.image.set_colorkey((255,255,255))## get rid of (r,b,g)
-        self.rect = self.image.get_rect()
-        self.rect.x =random.randint(0,1000-self.rect.width)
-        self.rect.y = random.randint(0,650-self.rect.height)
-        self.speedx = random.randint(-8,8)
-        self.speedy = random.randint(-8,8)
-
-    def update(self):  
-        self.rect.x += self.speedx
-        self.rect.y += self.speedy
-        if self.rect.bottom >=700 or self.rect.top<=0:
-            self.speedy *= -1
-        if self.rect.left <=0 or self.rect.right >=1000:
-            self.speedx *=-1
-
-class Food(pygame.sprite.Sprite):
-
-    def __init__(self):
-        pygame.sprite.Sprite.__init__(self)
-
-        self.image =pygame.transform.scale(food_img,(40,60))
-       ## self.image.set_colorkey((0,0,0))## get rid of (r,b,g)
-        self.rect = self.image.get_rect()
-        self.rect.x =random.randint(0,1000-self.rect.width)
-        self.rect.y = random.randint(0,650-self.rect.height)
-        self.speedx = 1
-        self.speedy = 1
-
-    def update(self):  
-        self.rect.x += self.speedx
-        self.rect.y += self.speedy
-        if self.rect.bottom >=700 or self.rect.top<=0:
-            self.speedy *= -1
-        if self.rect.left <=0 or self.rect.right >=1000:
-            self.speedx *=-1
-
-            
 ####setup
 pygame.init()
 
@@ -98,20 +26,14 @@ font = pygame.font.Font(None, 36)
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("BROMATO")
 
-###image loading
-player_img   = pygame.image.load(os.path.join("image","Sad_tomato.png")).convert_alpha()
-monster_img   = pygame.image.load(os.path.join("image","Wisdom.webp")).convert_alpha()
-food_img   = pygame.image.load(os.path.join("image","Lost_duck.png")).convert_alpha()
+
 ###sprite gruppe 
 all_sprites = pygame.sprite.Group()
 monsters = pygame.sprite.Group()
 foods=pygame.sprite.Group()
+bullets = pygame.sprite.Group()
 
-###add monster
-for i in range(5):
-    monster = Monster()
-    all_sprites.add(monster)
-    monsters.add(monster)
+
 
 ###start UI
 def start_game():
@@ -161,15 +83,24 @@ running = True
 ## add player
 player = Player()
 all_sprites.add(player)
+###add monster at beginning
+for i in range(3):
+    monster = Monster()
+    food = Food()
+    all_sprites.add(monster)
+    all_sprites.add(food)
+    monsters.add(monster)
+    foods.add(food)
 
 #####add game parameter
 counter=0 #score
 game_duration=60
 start_time=time.time()
-
+fps_counter=0
+hit_time = 100
 
 while running:
-
+    fps_counter +=1
     ### list of event of action
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -183,6 +114,21 @@ while running:
     player_duration = int(current_time-start_time)
     countdown = game_duration-player_duration
 
+    ### rate = 60 * 0.002
+    if countdown%5 ==0:
+        if random.randint(1,1000)%100 ==0: 
+                food = Food()
+                all_sprites.add(food)
+                foods.add(food)
+    
+    if countdown%10 ==0:
+        for i in range(1):
+            if random.randint(1,36)%6 ==0: 
+                monster = Monster()
+                all_sprites.add(monster)
+                monsters.add(monster)
+    
+
 
     timer_text = font.render(f"Countdown:{countdown}",True,(255,255,255))
 
@@ -192,22 +138,22 @@ while running:
     ####collision detection
     hits_byMonster = pygame.sprite.spritecollide(player,monsters,True)
     hits_byFood = pygame.sprite.spritecollide(player,foods,True)
+    hits_byBullet = pygame.sprite.groupcollide(bullets,monsters,True,True)
 
     for hit in hits_byMonster:
         counter = counter+1
-        monster = Monster()
         player.hp -=10
-        if random.randint(1,9)%3 ==0:
-            food = Food()
-            all_sprites.add(food)
-            foods.add(food)
-
-        all_sprites.add(monster)
-        monsters.add(monster)
-
+        
+    
     for eat in hits_byFood:
+        hit_time = countdown
         player.hp+= random.randint(1,5)
-        countdown -=10
+        countdown -=10     
+    if hit_time - countdown <=5:
+        if fps_counter%10 ==0:
+                bullet = Bullet(player)
+                all_sprites.add(bullet)
+                bullets.add(bullet)
        
 
     score = player.hp - countdown 
